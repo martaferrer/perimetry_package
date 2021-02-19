@@ -1,28 +1,74 @@
-from .perimetry import Perimetry
+from perimetry import Perimetry
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 # Humphrey Field Analayzer perimeter (HFA)
 # SAP with the HFA (Humphrey Zeiss Systems; 24-2 SITA Standard strategy)
 # 24-2 pattern: 54 test locations
 class HumphreyPerimetry(Perimetry):
-    def __init__(self, perimetry, eye='OS'):
+    def __init__(self, perimetry, eye='OS', patient_id=0):
 
-        Perimetry.__init__(self, perimetry, eye)
+        Perimetry.__init__(self, total_deviation=perimetry, eye=eye,  patient_id=patient_id)
 
 
-    def CreateImage10x10(self, value, patient_id):
-        #modified_data = data.drop('patient_id', axis=1)
-        perimetry_array = self.total_deviation
+    def glaucoma_hemifield_test(self):
+        '''
+        Each hemifield was divided into 5 regions according to the Glaucoma Hemifield Test (GHT):
+        central, paracentral, nasal, and peripheral arcuates 1 and 2.
 
-        # Add missing positions to create a 10x10 image
-        self._add_empty_spaces(perimetry_array, value)
-        self._add_dummy_rows(perimetry_array, value)
-        self._add_dummy_columns(perimetry_array, value)
+        :return:
+        '''
+        # Divide the 24-2 pattern in 10 regions
+        regions = []
+        regions.append([0, 1, 4, 5, 6, 7])
+        regions.append([2, 3, 8, 9])
+        regions.append([10, 11, 18, 19, 20])
+        regions.append([12, 13, 14, 15])
+        regions.append([21, 22, 23])
+        regions.append([26, 27, 28, 34, 35])
+        regions.append([29, 30, 31])
+        regions.append([36, 37, 38, 39])
+        regions.append([42, 43, 44, 45, 48, 49])
+        regions.append([46, 47, 50, 51])
+
+        hemified = pd.DataFrame()
+        for i in range(len(regions)):
+            a = self.total_deviation[regions[i]].mean(axis=1)
+            hemified[i] = pd.Series(a)
+
+        hemified.insert(loc=0, column='patient_id', value=self.patient_id)
+
+
+    def create_image(self, value, height=8, width=9, patient_id=None):
+        '''
+
+        :param value:
+        :param height:
+        :param width:
+        :param patient_id:
+        :return:
+        '''
+
+        perimetry_array = pd.DataFrame(self.total_deviation).T
+
+        if(height==8 and width==9):
+            self._add_empty_spaces(perimetry_array, value)
+        elif(height==10 and width==10):
+            # Add missing positions to create a 10x10 image
+            self._add_empty_spaces(perimetry_array, value)
+            self._add_dummy_rows(perimetry_array, value)
+            self._add_dummy_columns(perimetry_array, value)
+        else:
+            print('Image size not supported')
+            sys.exit()
 
         # Print image to see if all is ok
-        self._plot_image(perimetry_array.loc[0],10,10)
+        self._plot_image(perimetry_array.loc[0],height,width)
+
+
+
 
         # Rename data frame header and insert patient ID
         perimetry_array.columns = range(perimetry_array.shape[1])
