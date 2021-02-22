@@ -33,15 +33,20 @@ class HumphreyPerimetry(Perimetry):
         regions.append([42, 43, 44, 45, 48, 49])
         regions.append([46, 47, 50, 51])
 
-        hemified = pd.DataFrame()
+        hemified = self.total_deviation.copy()
         for i in range(len(regions)):
-            a = self.total_deviation[regions[i]].mean(axis=1)
-            hemified[i] = pd.Series(a)
-
-        hemified.insert(loc=0, column='patient_id', value=self.patient_id)
+            region_mean = self.total_deviation[regions[i]].mean()
+            hemified.loc[regions[i]] = region_mean
 
 
-    def create_image(self, value, height=8, width=9, patient_id=None):
+        #hemified.insert(loc=0, column='patient_id', value=self.patient_id)
+        print(hemified.shape)
+        print(hemified)
+
+        return hemified
+
+
+    def create_image(self, mask=0, height=8, width=9):
         '''
 
         :param value:
@@ -54,12 +59,12 @@ class HumphreyPerimetry(Perimetry):
         perimetry_array = pd.DataFrame(self.total_deviation).T
 
         if(height==8 and width==9):
-            self._add_empty_spaces(perimetry_array, value)
+            self._add_empty_spaces(perimetry_array, mask)
         elif(height==10 and width==10):
             # Add missing positions to create a 10x10 image
-            self._add_empty_spaces(perimetry_array, value)
-            self._add_dummy_rows(perimetry_array, value)
-            self._add_dummy_columns(perimetry_array, value)
+            self._add_empty_spaces(perimetry_array, mask)
+            self._add_dummy_rows(perimetry_array, mask)
+            self._add_dummy_columns(perimetry_array, mask)
         else:
             print('Image size not supported')
             sys.exit()
@@ -67,14 +72,11 @@ class HumphreyPerimetry(Perimetry):
         # Print image to see if all is ok
         self._plot_image(perimetry_array.loc[0],height,width)
 
-
-
-
         # Rename data frame header and insert patient ID
-        perimetry_array.columns = range(perimetry_array.shape[1])
-        perimetry_array.insert(loc=0, value=patient_id, column='patient_id')
+        #perimetry_array.columns = range(perimetry_array.shape[1])
+        #perimetry_array.insert(loc=0, value=patient_id, column='patient_id')
 
-        return perimetry_array
+        #return perimetry_array
 
     def _add_empty_spaces(self, data, value):
 
@@ -116,5 +118,3 @@ class HumphreyPerimetry(Perimetry):
         plt.colorbar(img)
 
         plt.show()
-
-        fig.savefig('Image_' + str(height) + '_' + str(width) + '.png', bbox_inches='tight')
