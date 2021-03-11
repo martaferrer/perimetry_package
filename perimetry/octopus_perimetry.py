@@ -1,4 +1,4 @@
-from perimetry import Perimetry
+from .perimetry import Perimetry
 
 # Octopus perimeter (OP)
 # SAP with the OP (Haag-Streit International; TOP test strategy).

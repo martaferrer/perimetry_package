@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from humphrey_perimetry import HumphreyPerimetry
+from .humphrey_perimetry import HumphreyPerimetry
 
 from csv import reader
 
